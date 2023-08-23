@@ -1,16 +1,17 @@
 import 'package:dio/dio.dart';
+import 'package:moviapp/models/bus_stop.dart';
 
 class BaseAPI {
-  static String base = "";
+  static String base = "https://ws.rosario.gob.ar/ubicaciones/public";
 
   dynamic client;
 
   BaseAPI() {
     client = Dio(BaseOptions(
       baseUrl: base,
-      connectTimeout: const Duration(milliseconds: 10000),
-      receiveTimeout: const Duration(milliseconds: 10000),
-      sendTimeout: const Duration(milliseconds: 10000),
+      connectTimeout: const Duration(seconds: 5),
+      receiveTimeout: const Duration(seconds: 5),
+      sendTimeout: const Duration(seconds: 5),
       followRedirects: false,
     ));
   }
@@ -26,23 +27,11 @@ class BaseAPI {
 }
 
 class PublicAPI extends BaseAPI {
-  Future<User> login(
-      String email, String password, String? otpCode, String captcha) async {
-    var body = {
-      'email': email,
-      'password': password,
-      "captcha_response": captcha,
-      'otp_code': otpCode ?? ""
-    };
+  Future<List<BusStop>> getBusStopData(int numb) async {
+    final response = await get("/cuandollega", params: {"parada": numb});
 
-    final response = await post("auth/identity/sessions", body: body);
-
-    return User.fromJson(response.data);
-  }
-
-  Future getUser() async {
-    final response = await get("auth/resource/users/me");
-
-    return User.fromJson(response.data);
+    return response.data
+        .map<BusStop>((jsonObject) => BusStop.fromJson(jsonObject))
+        .toList();
   }
 }
