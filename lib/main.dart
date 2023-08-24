@@ -1,7 +1,11 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:moviapp/components/bus.dart';
+import 'package:moviapp/components/bus_skeleton.dart';
 import 'package:moviapp/http/api.dart';
 import 'package:moviapp/models/bus_stop.dart';
+import 'package:skeletons/skeletons.dart';
 
 void main() {
   runApp(const MyApp());
@@ -38,13 +42,21 @@ class _SearchBusStopState extends State<SearchBusStop> {
   Future<void> fetchData() async {
     final api = PublicAPI();
 
-    final data = await api.getBusStopData(int.parse(stop ?? ""));
+    if (stop == null) return;
 
-    print(data[0].linea.id);
+    try {
+      final data = await api.getBusStopData(int.parse(stop ?? ""));
 
-    setState(() {
-      stopData = data;
-    });
+      await Future.delayed(const Duration(seconds: 2));
+
+      print("toy");
+      setState(() {
+        stopData = data;
+      });
+      print("toy");
+    } catch (e) {
+      print(e);
+    }
   }
 
   @override
@@ -66,36 +78,53 @@ class _SearchBusStopState extends State<SearchBusStop> {
               onChanged: (value) => setState(() {
                     stop = value;
                   }),
-              onTapOutside: (event) => setState(() {
-                    stopData = null;
-                  }),
               onSubmitted: (value) => {
+                    fetchData(),
                     showModalBottomSheet(
+                        isScrollControlled: true,
                         context: context,
-                        builder: (context) => SizedBox(
+                        builder: (context) => Container(
+                              constraints:
+                                  const BoxConstraints(minHeight: 240.0),
                               width: double.infinity,
-                              height: double.infinity,
-                              child: Flex(
-                                direction: Axis.vertical,
+                              height: stopData != null
+                                  ? 100.0 * stopData!.length
+                                  : 0,
+                              child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 crossAxisAlignment: CrossAxisAlignment.center,
-                                children: stopData
-                                        ?.map((e) => Padding(
-                                              padding: const EdgeInsets.all(1),
-                                              child: Flex(
-                                                direction: Axis.vertical,
-                                                children: [
-                                                  Bus(
-                                                    busData: e,
-                                                  )
-                                                ],
-                                              ),
-                                            ))
-                                        .toList() ??
-                                    [const CircularProgressIndicator()],
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.only(
+                                        top: 10, bottom: 10),
+                                    alignment: Alignment.center,
+                                    child: Text(
+                                      "Parada $stop",
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  ...((stopData
+                                          ?.map<Widget>((e) => Padding(
+                                              padding: const EdgeInsets.all(10),
+                                              child: Bus(
+                                                busData: e,
+                                              )))
+                                          .toList()) ??
+                                      [
+                                        const Padding(
+                                            padding: EdgeInsets.all(10),
+                                            child: BusSkeleton()),
+                                        const Padding(
+                                            padding: EdgeInsets.all(10),
+                                            child: BusSkeleton()),
+                                      ])
+                                ],
                               ),
-                            )),
-                    fetchData(),
+                            )).whenComplete(
+                        () => setState(() => stopData = null)),
                   }),
         ));
   }

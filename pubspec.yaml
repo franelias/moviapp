@@ -38,6 +38,7 @@ dependencies:
   dio: ^5.3.2
   hooks_riverpod: ^2.3.8
   modal_bottom_sheet: ^2.1.2
+  skeletons: ^0.0.3
 
 dev_dependencies:
   flutter_test:
