@@ -39,28 +39,61 @@ class _SearchBusStopState extends State<SearchBusStop> {
   List<BusStop>? stopData;
   String? stop;
 
-  Future<void> fetchData() async {
-    final api = PublicAPI();
-
-    if (stop == null) return;
-
-    try {
-      final data = await api.getBusStopData(int.parse(stop ?? ""));
-
-      await Future.delayed(const Duration(seconds: 2));
-
-      print("toy");
-      setState(() {
-        stopData = data;
-      });
-      print("toy");
-    } catch (e) {
-      print(e);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
+    Future<void> dialogBuilder(BuildContext context, dynamic error) {
+      return showDialog<void>(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Error'),
+            content: Text(error),
+            actions: <Widget>[
+              TextButton(
+                style: TextButton.styleFrom(
+                  textStyle: Theme.of(context).textTheme.labelLarge,
+                ),
+                child: const Text('Disable'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+              TextButton(
+                style: TextButton.styleFrom(
+                  textStyle: Theme.of(context).textTheme.labelLarge,
+                ),
+                child: const Text('Enable'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        },
+      );
+    }
+
+    Future<void> fetchData() async {
+      final api = PublicAPI();
+
+      if (stop == null) return;
+
+      try {
+        final data = await api.getBusStopData(int.parse(stop ?? ""));
+
+        await Future.delayed(const Duration(seconds: 2));
+
+        print("toy");
+        setState(() {
+          stopData = data;
+        });
+        print("toy");
+      } catch (e) {
+        await dialogBuilder(context, e);
+        print(e);
+      }
+    }
+
     return Scaffold(
         appBar: AppBar(
           backgroundColor: Theme.of(context).colorScheme.inversePrimary,
